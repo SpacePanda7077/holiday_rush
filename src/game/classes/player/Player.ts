@@ -149,23 +149,7 @@ export class Player {
         // this.character_controller.setMinSlopeSlideAngle((30 * Math.PI) / 180);
 
         // debug collision view (to be removed)
-        this.dg = this.scene.add.graphics();
-        this.dg.lineStyle(1, 0xff0000);
-        const debugRender = this.world.debugRender();
-        this.dg.clear();
-        this.dg.lineStyle(3, 0xff0000);
-        for (let i = 0; i < debugRender.vertices.length; i += 4) {
-            this.dg.beginPath();
-            this.dg.moveTo(
-                debugRender.vertices[i],
-                debugRender.vertices[i + 1]
-            );
-            this.dg.lineTo(
-                debugRender.vertices[i + 2],
-                debugRender.vertices[i + 3]
-            );
-            this.dg.strokePath();
-        }
+        
     }
     handle_inputs() {
         const pointer = this.scene.input.activePointer;
@@ -295,21 +279,7 @@ export class Player {
         const position = this.rigid_body.translation();
 
         this.body.setPosition(position.x, position.y);
-        const debugRender = this.world.debugRender();
-        this.dg.clear();
-        this.dg.lineStyle(3, 0xff0000);
-        for (let i = 0; i < debugRender.vertices.length; i += 4) {
-            this.dg.beginPath();
-            this.dg.moveTo(
-                debugRender.vertices[i],
-                debugRender.vertices[i + 1]
-            );
-            this.dg.lineTo(
-                debugRender.vertices[i + 2],
-                debugRender.vertices[i + 3]
-            );
-            this.dg.strokePath();
-        }
+        
     }
     create_particle() {
         if (!this.scene.textures.exists("snow_particle")) {

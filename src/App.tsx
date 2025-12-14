@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 
 
@@ -11,7 +11,20 @@ import { Get_Score } from "./components/Get_Score";
 
 
 import { EventBus } from "./game/EventBus";
-import { useAccount } from "wagmi";
+
+
+
+import { useAppKitAccount } from "@reown/appkit/react";
+
+
+
+import { useWriteContract } from "wagmi";
+
+
+
+import { contract_address, abi } from "./network/network.ts";
+
+
 
 import axios from "axios";
 
@@ -20,22 +33,106 @@ import axios from "axios";
 function App() {
 
     //  References to the PhaserGame component (game and scene are exposed)
-const { address, isConnecting, isDisconnected } = useAccount()
+
+    const [scene, setScene] = useState<any>("Menu");
+
+    const [open_leaderboard, setOpenLeaderboard] = useState<boolean>(false);
+
+
+
+    const { address, isConnected, status, allAccounts } = useAppKitAccount();
+
+
+
+    const { data, isSuccess, writeContract } = useWriteContract();
+
+
+
+    const { score, leaderboard, get_score } = Get_Score();
+
 
 
     const phaserRef = useRef<IRefPhaserGame | null>(null);
 
 
 
-    const { score, get_score } = Get_Score();
-
     useEffect(() => {
+
+        if (!address) return;
+
+
 
         EventBus.on("store", async (data: { score: number }) => {
 
-            const res: any = await axios.get(
-                "https://ff22a21e-c63a-4f66-9a05-3df6ed68ffbf-00-3ir3km59yofqq.janeway.replit.dev/");
-            console.log(res)
+            console.log(address, data.score);
+
+
+if(data.score < Number(score)) return
+            const res: any = await axios.post(
+
+                "https://holiday-rush-backend.onrender.com/verify_score",
+
+
+
+                { address, score: data.score },
+
+            );
+
+
+
+            console.log(res.data);
+
+
+
+            writeContract({
+
+                address: contract_address,
+
+
+
+                abi: abi,
+
+
+
+                functionName: "store_highscore",
+
+
+
+                args: [
+
+                    address,
+
+
+
+                    data.score,
+
+
+
+                    BigInt(res.data.nonce),
+
+
+
+                    res.data.signature,
+
+                ],
+
+            });
+
+
+
+            EventBus.off("store");
+
+        });
+
+    }, [address]);
+
+
+
+    useEffect(() => {
+
+        EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {
+
+            setScene(scene_instance.scene.key);
 
         });
 
@@ -51,7 +148,51 @@ const { address, isConnecting, isDisconnected } = useAccount()
 
 
 
-            <div>{score}</div>
+            <div className="leaderboard-btn-container">
+
+                <button
+                    onClick={() => {
+                        setOpenLeaderboard(true);
+                    }}
+                >
+                    Leaderboard
+                </button>
+
+            </div>
+
+
+
+            {scene === "Menu" && open_leaderboard && (
+                <div className="leaderboard-container">
+
+                    <button
+                        onClick={() => {
+                            setOpenLeaderboard(false);
+                        }}
+                    >
+                        Close
+                    </button>
+
+                    {leaderboard?.map((p: any) => (
+
+                        <div className="leaderboard">
+
+                            <p>
+
+                                {p.addres.slice(0, 5)}...{p.addres.slice(-5)}
+                            </p>
+
+
+
+                            <p>{p.score}</p>
+
+                        </div>
+
+                    ))}
+
+                </div>
+
+            )}
 
         </div>
 

@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Scene } from "phaser";
+import { EventBus } from "../EventBus";
 
 export class Physics extends Scene {
     constructor() {
@@ -8,10 +9,13 @@ export class Physics extends Scene {
     async preload() {
         await this.init_physics();
     }
-    create() {}
+    create() {
+        
+    }
     async init_physics() {
         await RAPIER.init().then(() => {
-            this.scene.start("Game");
+          this.scene.start("Game");
+            EventBus.emit("current-scene-ready", this)  
         });
     }
 }

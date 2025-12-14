@@ -9,6 +9,7 @@ import {
 } from "@dimforge/rapier2d-compat";
 import { Scene } from "phaser";
 import { Player } from "../classes/player/Player";
+import { EventBus } from "../EventBus";
 import uniqid from "uniqid";
 import { Point, pointsOnBezierCurves } from "points-on-curve";
 import { Decoration } from "../classes/decorations/decorations";
@@ -67,7 +68,7 @@ export class Menu extends Scene {
     }
     create() {
         this.game_started = false;
-        this.scene.launch("Ui");
+        
         this.sound.play("bg_sound", { loop: true });
         this.game_width = Number(this.game.config.width);
         this.game_height = Number(this.game.config.height);
@@ -85,7 +86,7 @@ export class Menu extends Scene {
 
         this.last_Deroration_add_time = 0;
         this.last_obs_add_time = 0;
-        this.cameras.main.setZoom(0.5);
+        this.cameras.main.setZoom(0.6);
 
         this.bg_gen_time = 1000;
         this.obs_gen_time = 2000;
@@ -97,6 +98,7 @@ export class Menu extends Scene {
         this.decorations = [];
         this.obstacles = [];
         this.power_ups = [];
+        EventBus.emit("current-scene-ready", this)  
     }
     update(time: number, delta: number): void {
         this.move_bg();
@@ -111,17 +113,24 @@ export class Menu extends Scene {
         for (let i = 1; i < 7; i++) {
             const img = this.add
                 .tileSprite(
-                    this.game_height / 2,
-                    this.game_width / 2,
-                    this.game_width,
-                    this.game_height,
+                    
+  this.game_width / 2,                  this.game_height / 2,
+                    
+                    500,
+                    500,
                     i.toString()
                 )
 
                 .setScrollFactor(0)
                 .setDepth(-1000)
-                .setScale(2.5);
-            this.paralax_bg.push(img);
+                
+            const scaleX = this.game_width / img.width / 0.6;
+
+            const scaleY = this.game_height / img.height / 0.6;
+
+            console.log(this.game_width, img.width, scaleX, scaleY);
+
+            img.setScale(scaleX, scaleY);this.paralax_bg.push(img);
         }
     }
     move_bg() {
