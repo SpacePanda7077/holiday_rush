@@ -16,6 +16,8 @@ import { Obstacles } from "../classes/obstacles/obstacles";
 import { Santa_Slegh } from "../classes/power_ups/Santa_slegh";
 import { weightedRandom } from "../helper/random";
 import { Grinch } from "../classes/power_ups/grinch";
+import { Collectable } from "../classes/collectables/collectable"
+import { EventBus } from "../EventBus";
 
 export class Game extends Scene {
     graphics: Phaser.GameObjects.Graphics;
@@ -57,6 +59,8 @@ export class Game extends Scene {
     main_menu: Phaser.GameObjects.Text;
     try_again: Phaser.GameObjects.Text;
     distance_text: Phaser.GameObjects.Text;
+    presentText: Phaser.GameObjects.Text;
+    collectables: Collectable[]
     constructor() {
         super("Game");
     }
@@ -100,13 +104,19 @@ export class Game extends Scene {
             .setOrigin(0.5)
             .setDepth(6000)
             .setScrollFactor(0);
-
+        this.presentText = this.add.text(0, 0, "0", {
+            fontSize: "50px",
+            align: "center",
+            fontStyle: "bold",
+        }).setOrigin(0.5)
+            .setDepth(6000).setScrollFactor(0);
         this.initialGround();
         this.create_avalanche();
         this.bodyTobeRemoved = new Set();
         this.decorations = [];
         this.obstacles = [];
         this.power_ups = [];
+        this.collectables = []
         this.player = new Player(this, this.world, { x: 2000, y: 400 });
         this.events.on("restart", () => {
             this.sound.stopAll();
@@ -132,6 +142,9 @@ export class Game extends Scene {
             this.player.body.y
         );
         this.distance_text.text = Math.floor(distance / 1000).toString();
+        this.score.text = "Score : " + Math.floor(distance / 1000).toString();
+        this.presentText.text = this.player.collectedPresent.toString()
+        this.present.text = "Present : " + this.player.collectedPresent.toString()
 
         this.player.move_player(time, delta);
 
@@ -169,6 +182,7 @@ export class Game extends Scene {
             this.game_ended = true;
             this.scoreContainer.setActive(true).setVisible(true);
             this.try_again.setActive(true).setVisible(true);
+            EventBus.emit("store", { score: this.player.collectedPresent })
         }
     }
 
@@ -456,7 +470,8 @@ export class Game extends Scene {
                     body2,
                     this.time_now,
                     this.obstacles,
-                    this.power_ups
+                    this.power_ups, this.collectables
+
                 );
             }
         });
@@ -491,7 +506,7 @@ export class Game extends Scene {
         if (!flat_point) return;
         const rand_point_index = Math.floor(
             Math.random() * Math.floor(flat_point.length / 2) +
-                Math.floor(flat_point.length / 2)
+            Math.floor(flat_point.length / 2)
         );
         const point = this.bezierSlopePoints[3][rand_point_index];
 
@@ -524,32 +539,32 @@ export class Game extends Scene {
         if (!flat_point) return;
         const rand_point_index = Math.floor(
             Math.random() * Math.floor(flat_point.length / 2) +
-                Math.floor(flat_point.length / 2)
+            Math.floor(flat_point.length / 2)
         );
         const point =
             this.bezierSlopePoints[this.bezierSlopePoints.length - 1][
-                rand_point_index
+            rand_point_index
             ];
         for (let i = 0; i < 5; i++) {
             let pointx =
                 this.bezierSlopePoints[this.bezierSlopePoints.length - 1][
-                    rand_point_index + i * 2
+                rand_point_index + i * 2
                 ]?.[0];
             let pointy =
                 this.bezierSlopePoints[this.bezierSlopePoints.length - 1][
-                    rand_point_index + i * 2
+                rand_point_index + i * 2
                 ]?.[1];
             if (!pointx || !pointy) {
                 console.log(pointx, pointy);
                 return;
             }
-            this.add.rectangle(pointx, pointy, 50, 50, 0xfff000);
+            const dc = new Collectable(this, this.world, {
+                x: pointx,
+                y: pointy
+            });
+            this.collectables.push(dc);
         }
 
-        // const dc = new Obstacles(this, this.world, {
-        //     x: point[0],
-        //     y: point[1],
-        // });
 
         // this.obstacles.push(dc);
     }
@@ -558,8 +573,8 @@ export class Game extends Scene {
             if (
                 deco.decoration &&
                 deco.decoration.x <
-                    this.cameras.main.worldView.x -
-                        this.cameras.main.worldView.width / 2
+                this.cameras.main.worldView.x -
+                this.cameras.main.worldView.width / 2
             ) {
                 const index = this.decorations.indexOf(deco);
                 deco.destroy();
@@ -567,13 +582,22 @@ export class Game extends Scene {
                 console.log("removed");
             }
         });
+
+        this.collectables.forEach(deco => {
+            if (deco.decoration && deco.decoration.x < this.cameras.main.worldView.x - this.cameras.main.worldView.width / 2
+            ) {
+                const index = this.collectables.indexOf(deco);
+                deco.destroy();
+                this.collectables.splice(index, 1);
+            }
+        })
     }
     remove_Obstacles() {
         this.obstacles.forEach((obs) => {
             if (
                 obs.decoration.x <
                 this.cameras.main.worldView.x -
-                    this.cameras.main.worldView.width / 2
+                this.cameras.main.worldView.width / 2
             ) {
                 const index = this.obstacles.indexOf(obs);
                 obs.destroy();
@@ -587,7 +611,7 @@ export class Game extends Scene {
             if (
                 obs.body.x <
                 this.cameras.main.worldView.x -
-                    this.cameras.main.worldView.width / 2
+                this.cameras.main.worldView.width / 2
             ) {
                 const index = this.power_ups.indexOf(obs);
                 obs.destroy();
@@ -695,4 +719,3 @@ export class Game extends Scene {
         this.try_again.setActive(false).setVisible(false);
     }
 }
-

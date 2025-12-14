@@ -13,6 +13,7 @@ import {
 import { polygonAmoy } from "viem/chains";
 import { Obstacles } from "../obstacles/obstacles";
 import { Santa_Slegh } from "../power_ups/Santa_slegh";
+import { Collectable } from "../collectables/collectable";
 
 export class Player {
     scene: Phaser.Scene;
@@ -51,6 +52,7 @@ export class Player {
     lastHitSomethingTime: number;
     is_flipping: boolean;
     position: { x: number; y: number };
+    collectedPresent: number
 
     constructor(
         scene: Phaser.Scene,
@@ -88,6 +90,7 @@ export class Player {
 
         this.tirckMultiplier = 0;
         this.speedMultiplier = 1;
+        this.collectedPresent = 0
 
         // ...........
         this.velocity = new Phaser.Math.Vector2(0, 0);
@@ -353,7 +356,8 @@ export class Player {
         body2: RigidBody,
         time: number,
         obstacles: Obstacles[],
-        power_ups: Santa_Slegh[]
+        power_ups: Santa_Slegh[],
+        collectables: Collectable[]
     ) {
         const udata1 = body1.userData as any;
         const udata2 = body2.userData as any;
@@ -384,6 +388,18 @@ export class Player {
                 this.scene.cameras.main.shake(100, 0.02);
             }
         } else if (
+            (udata1.type === "player" && udata2.type === "collectable")
+        ) {
+            let obsta = collectables.find((obs) => obs.rigid_body === body2);
+            if (obsta) {
+                const index = collectables.indexOf(obsta);
+                obsta.destroy();
+                collectables.splice(index, 1)
+                this.collectedPresent++
+            }
+        }
+
+        else if (
             (udata1.type === "hit_box" && udata2.type === "ground") ||
             (udata1.type === "ground" && udata2.type === "hit_box")
         ) {
@@ -402,4 +418,3 @@ export class Player {
         this.rigid_body.setTranslation(this.position, true);
     }
 }
-

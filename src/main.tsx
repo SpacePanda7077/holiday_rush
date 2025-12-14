@@ -55,4 +55,3 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </AppKitProvider>
     </React.StrictMode>
 );
-
