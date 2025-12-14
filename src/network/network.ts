@@ -1,16 +1,10 @@
 import { defineChain } from "viem";
 
-export const contract_address = "0x3F6984A9FbA98577C042af53504239f76Cf665F0";
+export const contract_address = "0x6eaeA7aE7Ea6426fa8369Bd4fEB9D5EFF53A032f";
 
 export const abi = [
     {
-        inputs: [
-            {
-                internalType: "address",
-                name: "initialOwner",
-                type: "address",
-            },
-        ],
+        inputs: [],
         stateMutability: "nonpayable",
         type: "constructor",
     },
@@ -114,7 +108,13 @@ export const abi = [
         type: "function",
     },
     {
-        inputs: [],
+        inputs: [
+            {
+                internalType: "address",
+                name: "_player",
+                type: "address",
+            },
+        ],
         name: "get_player_score",
         outputs: [
             {
@@ -229,7 +229,6 @@ export const abi = [
         type: "function",
     },
 ];
-
 export const SomniaMainnet = defineChain({
     id: 5031, // <--- **REQUIRED: The Chain ID of your custom network**
     name: "Somnia",
