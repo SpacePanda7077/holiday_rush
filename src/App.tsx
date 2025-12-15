@@ -49,7 +49,7 @@ function App() {
 
             if (data.score < Number(score)) return;
             const res: any = await axios.post(
-                "http://localhost:5000/verify_score",
+                "https://hr-backend-mauve.vercel.app/verify_score",
 
                 { address, score: data.score }
             );
