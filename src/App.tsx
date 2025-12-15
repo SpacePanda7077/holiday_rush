@@ -49,7 +49,7 @@ function App() {
 
             if (data.score < Number(score)) return;
             const res: any = await axios.post(
-                "https://holiday-rush-backend.onrender.com/verify_score",
+                "http://localhost:5000/verify_score",
 
                 { address, score: data.score }
             );
@@ -63,24 +63,19 @@ function App() {
 
                 functionName: "store_highscore",
 
-                args: [
-                    address,
-
-                    data.score,
-
-                    BigInt(res.data.nonce),
-
-                    res.data.signature,
-                ],
+                args: [address, data.score, res.data.nonce, res.data.signature],
             });
 
-            EventBus.off("store");
+            //EventBus.off("store");
         });
     }, [address]);
 
     useEffect(() => {
         EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {
             setScene(scene_instance.scene.key);
+            if (get_score) {
+                get_score();
+            }
         });
     }, []);
 
@@ -108,8 +103,8 @@ function App() {
                         Close
                     </button>
 
-                    {leaderboard?.map((p: any) => (
-                        <div className="leaderboard">
+                    {leaderboard?.map((p: any, i) => (
+                        <div key={i} className="leaderboard">
                             <p>
                                 {p.addres.slice(0, 5)}...{p.addres.slice(-5)}
                             </p>
