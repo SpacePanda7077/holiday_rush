@@ -52,7 +52,7 @@ export class Player {
     lastHitSomethingTime: number;
     is_flipping: boolean;
     position: { x: number; y: number };
-    collectedPresent: number
+    collectedPresent: number;
 
     constructor(
         scene: Phaser.Scene,
@@ -90,7 +90,7 @@ export class Player {
 
         this.tirckMultiplier = 0;
         this.speedMultiplier = 1;
-        this.collectedPresent = 0
+        this.collectedPresent = 0;
 
         // ...........
         this.velocity = new Phaser.Math.Vector2(0, 0);
@@ -149,7 +149,6 @@ export class Player {
         // this.character_controller.setMinSlopeSlideAngle((30 * Math.PI) / 180);
 
         // debug collision view (to be removed)
-        
     }
     handle_inputs() {
         const pointer = this.scene.input.activePointer;
@@ -279,7 +278,6 @@ export class Player {
         const position = this.rigid_body.translation();
 
         this.body.setPosition(position.x, position.y);
-        
     }
     create_particle() {
         if (!this.scene.textures.exists("snow_particle")) {
@@ -298,6 +296,13 @@ export class Player {
             alpha: { start: 1, end: 0.6 },
         });
         this.particle.startFollow(this.body, 0, this.body.width / 2);
+    }
+    dynamic_camera() {
+        if (!this.isGrounded) {
+            const zoom = this.scene.cameras.main.setZoom(0.4);
+        } else {
+            this.scene.cameras.main.setZoom(0.6);
+        }
     }
     checkGrounded() {
         let shape = new Ball(this.body.width / 2);
@@ -357,19 +362,15 @@ export class Player {
                 this.velocity.x += 2;
                 this.scene.cameras.main.shake(100, 0.02);
             }
-        } else if (
-            (udata1.type === "player" && udata2.type === "collectable")
-        ) {
+        } else if (udata1.type === "player" && udata2.type === "collectable") {
             let obsta = collectables.find((obs) => obs.rigid_body === body2);
             if (obsta) {
                 const index = collectables.indexOf(obsta);
                 obsta.destroy();
-                collectables.splice(index, 1)
-                this.collectedPresent++
+                collectables.splice(index, 1);
+                this.collectedPresent++;
             }
-        }
-
-        else if (
+        } else if (
             (udata1.type === "hit_box" && udata2.type === "ground") ||
             (udata1.type === "ground" && udata2.type === "hit_box")
         ) {

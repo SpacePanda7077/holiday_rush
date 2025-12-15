@@ -106,6 +106,7 @@ export class Game extends Scene {
     presentText: Phaser.GameObjects.Text;
 
     collectables: Collectable[];
+    last_item_add_time: number;
 
     constructor() {
         super("Game");
@@ -145,6 +146,7 @@ export class Game extends Scene {
         this.last_Deroration_add_time = 0;
 
         this.last_obs_add_time = 0;
+        this.last_item_add_time = 0;
 
         this.cameras.main.setZoom(0.6);
 
@@ -272,13 +274,17 @@ export class Game extends Scene {
         }
 
         if (time > this.last_obs_add_time + this.obs_gen_time) {
-            this.add_items();
+            this.add_obstacles();
 
             this.obs_gen_time -= 2;
 
             this.obs_gen_time = Phaser.Math.Clamp(this.obs_gen_time, 300, 2000);
 
             this.last_obs_add_time = time;
+        }
+        if (time > this.last_item_add_time + Phaser.Math.Between(4000, 8000)) {
+            this.add_items();
+            this.last_item_add_time = time;
         }
 
         this.power_ups.forEach((p) => {
@@ -769,8 +775,6 @@ export class Game extends Scene {
 
     add_items() {
         const items = [
-            { item: this.add_obstacles.bind(this), weight: 40 },
-
             { item: this.add_collectables.bind(this), weight: 50 },
 
             { item: this.add_power_up.bind(this), weight: 5 },
