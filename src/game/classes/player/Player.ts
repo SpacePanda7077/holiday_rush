@@ -5,6 +5,7 @@ import {
     ColliderDesc,
     KinematicCharacterController,
     QueryFilterFlags,
+    Ray,
     RigidBody,
     RigidBodyDesc,
     World,
@@ -53,6 +54,9 @@ export class Player {
     is_flipping: boolean;
     position: { x: number; y: number };
     collectedPresent: number;
+    grooundCheckRay: Ray;
+    groundRayMaxTOI: number;
+    zoom: number;
 
     constructor(
         scene: Phaser.Scene,
@@ -64,7 +68,7 @@ export class Player {
         this.position = position;
 
         // gravity, acceleration and jump force
-        this.JUMP_HEIGHT = 3;
+        this.JUMP_HEIGHT = 5;
         this.JUMP_TIME = 0.6;
         this.ACCELERATION = 8;
         this.MAX_GROUND_ACCELERATION = 20;
@@ -108,8 +112,8 @@ export class Player {
             true,
             0.3,
             0.3,
-            -300,
-            100
+            -500,
+            -200
         );
         const rigid_body_desc = RigidBodyDesc.kinematicPositionBased()
             .setTranslation(position.x, position.y)
@@ -145,10 +149,11 @@ export class Player {
         this.character_controller = this.world.createCharacterController(0.01);
         this.character_controller.setUp({ x: 0, y: -1 });
         this.character_controller.enableSnapToGround(200);
-        // this.character_controller.setMaxSlopeClimbAngle((90 * Math.PI) / 180);
-        // this.character_controller.setMinSlopeSlideAngle((30 * Math.PI) / 180);
-
-        // debug collision view (to be removed)
+        this.grooundCheckRay = new Ray(
+            { x: this.body.x, y: this.body.y },
+            { x: 0, y: 1 }
+        );
+        this.groundRayMaxTOI = 200;
     }
     handle_inputs() {
         const pointer = this.scene.input.activePointer;
@@ -274,10 +279,12 @@ export class Player {
         this.head_rigid_body.setNextKinematicRotation(this.body.rotation);
     }
     sync_body() {
+        this.dynamic_camera();
         this.handle_inputs();
         const position = this.rigid_body.translation();
 
         this.body.setPosition(position.x, position.y);
+        this.grooundCheckRay.origin = position;
     }
     create_particle() {
         if (!this.scene.textures.exists("snow_particle")) {
@@ -298,10 +305,20 @@ export class Player {
         this.particle.startFollow(this.body, 0, this.body.width / 2);
     }
     dynamic_camera() {
-        if (!this.isGrounded) {
-            const zoom = this.scene.cameras.main.setZoom(0.4);
+        const hit = this.world.castRay(
+            this.grooundCheckRay,
+            this.groundRayMaxTOI,
+            true,
+            QueryFilterFlags.EXCLUDE_SENSORS
+        );
+        if (hit) {
+            const zoomMultiplier = hit.timeOfImpact / this.groundRayMaxTOI;
+            this.zoom = 0.6 / zoomMultiplier;
+            this.zoom = Phaser.Math.Clamp(this.zoom, 0.2, 0.6);
+
+            this.scene.cameras.main.zoomTo(this.zoom, 200);
         } else {
-            this.scene.cameras.main.setZoom(0.6);
+            this.scene.cameras.main.zoomTo(0.4, 500);
         }
     }
     checkGrounded() {
@@ -375,16 +392,19 @@ export class Player {
             (udata1.type === "ground" && udata2.type === "hit_box")
         ) {
             console.log("hey hitbox");
+            this.scene.cameras.main.shake(100, 0.02);
             this.lastHitSomethingTime = time;
             this.hit_something = true;
         }
     }
+
     cancel_hit_somwthing(time: number) {
         if (time > this.lastHitSomethingTime + 1000) {
             this.hit_something = false;
             //this.lastHitSomethingTime = time;
         }
     }
+
     restart() {
         this.rigid_body.setTranslation(this.position, true);
     }

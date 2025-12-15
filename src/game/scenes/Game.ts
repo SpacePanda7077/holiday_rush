@@ -212,7 +212,7 @@ export class Game extends Scene {
 
         this.collectables = [];
 
-        this.player = new Player(this, this.world, { x: 2000, y: 400 });
+        this.player = new Player(this, this.world, { x: 2000, y: 0 });
 
         EventBus.emit("current-scene-ready", this);
     }
@@ -357,6 +357,11 @@ export class Game extends Scene {
     move_bg() {
         this.paralax_bg.forEach((bg, index) => {
             bg.tilePositionX += index * 0.2;
+            if (!this.player) return;
+            const scaleX = this.game_width / bg.width / 0.3;
+
+            const scaleY = this.game_height / bg.height / 0.3;
+            bg.setScale(scaleX, scaleY);
         });
     }
 
@@ -505,7 +510,7 @@ export class Game extends Scene {
     }
 
     move_avalanche() {
-        this.avalanche.x += 18;
+        this.avalanche.x += 16;
 
         this.avalanche.y = this.player.body.y;
 
