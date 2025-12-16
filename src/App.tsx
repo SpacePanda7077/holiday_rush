@@ -58,7 +58,7 @@ function App() {
         EventBus.on("store", async (data: { score: number; coins: number }) => {
             console.log(address, data.score, data.coins);
             const res: any = await axios.post(
-                "http://localhost:3000/verify_score",
+                "https://hr-backend-mauve.vercel.app/verify_score",
 
                 { address, score: data.score }
             );
