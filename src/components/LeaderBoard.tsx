@@ -1,20 +1,45 @@
-import { useReadContract } from "wagmi";
-import { abi, contract_address } from "../network/network";
-import { useEffect, useState } from "react";
-export function LeaderBoard() {
-    const [leaderBoard, setLeaderBoard] = useState<any>([]);
-    const { data, isError, isSuccess } = useReadContract({
-        address: contract_address,
-        abi: abi,
-        functionName: "get_high_scores",
-    });
-
-    useEffect(() => {
-        if (isSuccess) {
-            setLeaderBoard(data);
-        }
-    }, [isSuccess]);
-
-    return { leaderBoard };
+import { useGetScore } from "./hooks/useGetScore.tsx";
+interface LeaderboardProp {
+    open_modal: boolean;
+    setOpenModal: () => void;
 }
+import "./css/components.css";
+import { useEffect } from "react";
+import { EventBus } from "../game/EventBus.ts";
+
+function LeaderBoard({ open_modal, setOpenModal }: LeaderboardProp) {
+    const { leaderboard, get_score } = useGetScore();
+    useEffect(() => {
+        EventBus.on("current-scene-ready", () => {
+            get_score();
+        });
+    }, []);
+
+    return (
+        <>
+            {open_modal && (
+                <div className="leaderboard-container">
+                    <button
+                        onClick={() => {
+                            setOpenModal();
+                        }}
+                    >
+                        Close
+                    </button>
+
+                    {leaderboard?.map((p: any, i) => (
+                        <div key={i} className="leaderboard">
+                            <p>
+                                {p.addres.slice(0, 5)}...{p.addres.slice(-5)}
+                            </p>
+
+                            <p>{p.score}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </>
+    );
+}
+export default LeaderBoard;
 

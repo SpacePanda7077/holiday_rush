@@ -49,8 +49,10 @@ export default function ConnectButton() {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
-        <AppKitProvider children={undefined}>
-            <ConnectButton />
+        <AppKitProvider>
+            <div style={{ position: "absolute" }}>
+                <ConnectButton />
+            </div>
             <App />
         </AppKitProvider>
     </React.StrictMode>

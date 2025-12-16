@@ -2,68 +2,83 @@ import { useEffect, useRef, useState } from "react";
 
 import { IRefPhaserGame, PhaserGame } from "./PhaserGame";
 
-import { Get_Score } from "./components/Get_Score";
-
 import { EventBus } from "./game/EventBus";
 
 import { useAppKitAccount } from "@reown/appkit/react";
 
-import { useWriteContract } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 
 import { contract_address, abi } from "./network/network.ts";
+import useInventory from "./components/hooks/useInventory.tsx";
 
 import axios from "axios";
+import LeaderBoard from "./components/LeaderBoard.tsx";
+import NavBar from "./components/NavBar.tsx";
 
 function App() {
     //  References to the PhaserGame component (game and scene are exposed)
 
     const [scene, setScene] = useState<any>("Menu");
+    const [currentscene, setCurrentScene] = useState<Phaser.Scene | null>(null);
+    const [character, setCharacter] = useState("");
+
+    const setplayerCharacter = (pcharacter: string) => {
+        setCharacter(pcharacter);
+    };
 
     const [open_leaderboard, setOpenLeaderboard] = useState<boolean>(false);
+    const closeLeaderBoard = () => {
+        setOpenLeaderboard(false);
+    };
+    const { my_characters, get_characters } = useInventory();
 
-    const { address, isConnected, status, allAccounts } = useAppKitAccount();
+    const { address } = useAppKitAccount();
 
-    const { data, isSuccess, writeContract } = useWriteContract();
+    const { data: buydata, mutate: write } = useWriteContract();
+    const { data: buyReceipt } = useWaitForTransactionReceipt({
+        hash: buydata,
+    });
 
-    const scoreData = Get_Score();
-    const score =
-        typeof scoreData === "object" && "score" in scoreData
-            ? scoreData.score
-            : "0";
-    const leaderboard =
-        typeof scoreData === "object" && "leaderboard" in scoreData
-            ? scoreData.leaderboard
-            : [];
-    const get_score =
-        typeof scoreData === "object" && "get_score" in scoreData
-            ? scoreData.get_score
-            : undefined;
+    const first_mint = () => {
+        write({
+            address: contract_address,
+            abi,
+            functionName: "buy_character",
+            args: [0],
+        });
+    };
+
+    const { data, isError, error, mutate } = useWriteContract();
 
     const phaserRef = useRef<IRefPhaserGame | null>(null);
 
     useEffect(() => {
         if (!address) return;
 
-        EventBus.on("store", async (data: { score: number }) => {
-            console.log(address, data.score);
-
-            if (data.score < Number(score)) return;
+        EventBus.on("store", async (data: { score: number; coins: number }) => {
+            console.log(address, data.score, data.coins);
             const res: any = await axios.post(
-                "https://hr-backend-mauve.vercel.app/verify_score",
+                "http://localhost:3000/verify_score",
 
                 { address, score: data.score }
             );
 
             console.log(res.data);
 
-            writeContract({
+            mutate({
                 address: contract_address,
 
                 abi: abi,
 
                 functionName: "store_highscore",
 
-                args: [address, data.score, res.data.nonce, res.data.signature],
+                args: [
+                    address,
+                    data.coins,
+                    data.score,
+                    res.data.nonce,
+                    res.data.signature,
+                ],
             });
 
             //EventBus.off("store");
@@ -73,11 +88,14 @@ function App() {
     useEffect(() => {
         EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {
             setScene(scene_instance.scene.key);
-            if (get_score) {
-                get_score();
-            }
+            setCurrentScene(scene_instance);
         });
     }, []);
+    useEffect(() => {
+        if (buyReceipt) {
+            get_characters();
+        }
+    }, [buyReceipt]);
 
     return (
         <div id="app">
@@ -93,26 +111,35 @@ function App() {
                 </button>
             </div>
 
-            {scene === "Menu" && open_leaderboard && (
-                <div className="leaderboard-container">
-                    <button
-                        onClick={() => {
-                            setOpenLeaderboard(false);
-                        }}
-                    >
-                        Close
-                    </button>
+            {scene === "Menu" && (
+                <>
+                    <div className="start-btn">
+                        <button
+                            onClick={() => {
+                                if (my_characters.length <= 0) {
+                                    first_mint();
+                                } else {
+                                    if (currentscene) {
+                                        currentscene.sound.stopAll();
+                                        currentscene.scene.start("Physics", {
+                                            character,
+                                        });
+                                    }
+                                }
+                            }}
+                        >
+                            {my_characters.length <= 0
+                                ? "MInt First Character"
+                                : "Play"}
+                        </button>
+                    </div>
 
-                    {leaderboard?.map((p: any, i) => (
-                        <div key={i} className="leaderboard">
-                            <p>
-                                {p.addres.slice(0, 5)}...{p.addres.slice(-5)}
-                            </p>
-
-                            <p>{p.score}</p>
-                        </div>
-                    ))}
-                </div>
+                    <NavBar equip={setplayerCharacter} />
+                    <LeaderBoard
+                        open_modal={open_leaderboard}
+                        setOpenModal={closeLeaderBoard}
+                    />
+                </>
             )}
         </div>
     );

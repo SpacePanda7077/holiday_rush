@@ -107,9 +107,14 @@ export class Game extends Scene {
 
     collectables: Collectable[];
     last_item_add_time: number;
+    charcter: string;
 
     constructor() {
         super("Game");
+    }
+
+    init(data: { character: string }) {
+        this.charcter = data.character;
     }
 
     preload() {
@@ -121,7 +126,7 @@ export class Game extends Scene {
 
         this.load.image("rock", "obstacles/rock.png");
 
-        this.load.image("player", "player/penguin.png");
+        this.load.image("player", this.charcter);
 
         this.load.image("santa", "power_up/santa.png");
 
@@ -312,7 +317,10 @@ export class Game extends Scene {
 
             this.try_again.setActive(true).setVisible(true);
 
-            EventBus.emit("store", { score: Math.floor(distance / 1000) });
+            EventBus.emit("store", {
+                score: Math.floor(distance / 1000),
+                coins: this.player.collectedPresent,
+            });
         }
     }
 

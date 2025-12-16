@@ -78,19 +78,11 @@ export class Menu extends Scene {
             .setDepth(5000)
             .setScale(2.5)
             .setAlpha(0.8)
-            .setInteractive()
-            .on("pointerdown", () => {
-                this.sound.stopAll();
-                this.scene.start("Physics");
-            });
-        this.add
-            .text(this.logo.x, this.logo.y, "Click TO Start", {
-                fontSize: "50px",
-                fontStyle: "bold",
-            })
-            .setScrollFactor(0)
-            .setOrigin(0.5)
-            .setDepth(10000);
+            .setInteractive();
+        // .on("pointerdown", () => {
+        //     this.sound.stopAll();
+        //     this.scene.start("Physics");
+        // });
 
         this.last_Deroration_add_time = 0;
         this.last_obs_add_time = 0;
