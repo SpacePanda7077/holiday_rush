@@ -64,7 +64,7 @@ export function useGetScore(): GetScoreReturn {
             const myScore = mappedData.find((d: any) => d.addres === address);
 
             const sortedData = mappedData.sort(
-                (a: any, b: any) => b.score - a.score
+                (a: any, b: any) => Number(b.score) - Number(a.score)
             );
 
             setLeaderboard(sortedData);

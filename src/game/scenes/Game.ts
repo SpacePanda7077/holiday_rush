@@ -125,6 +125,10 @@ export class Game extends Scene {
         this.load.image("pine", "decorations/pine.png");
 
         this.load.image("rock", "obstacles/rock.png");
+        this.load.spritesheet("present", "collectables/present.png", {
+            frameWidth: 50,
+            frameHeight: 50,
+        });
 
         this.load.image("player", this.charcter);
 

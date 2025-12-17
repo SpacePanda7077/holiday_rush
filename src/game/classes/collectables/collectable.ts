@@ -9,7 +9,7 @@ import {
 export class Collectable {
     scene: Phaser.Scene;
     world: World;
-    decoration: Phaser.GameObjects.Rectangle;
+    decoration: Phaser.GameObjects.Sprite;
     rigid_body: any;
     collider: any;
     constructor(
@@ -19,12 +19,18 @@ export class Collectable {
     ) {
         this.scene = scene;
         this.world = world;
-        this.create_body(position)
+        this.create_body(position);
     }
     create_body(position: { x: number; y: number }) {
         this.decoration = this.scene.add
-            .rectangle(position.x, position.y, 50, 50, 0xfff000)
-            .setDepth(4000);
+            .sprite(
+                position.x,
+                position.y - 50,
+                "present",
+                Math.floor(Math.random() * 3)
+            )
+            .setDepth(4000)
+            .setScale(1.5);
         const rigid_body_desc = RigidBodyDesc.dynamic()
             .setTranslation(position.x, position.y)
             .setUserData({ type: "collectable" })
@@ -35,15 +41,15 @@ export class Collectable {
             .setFriction(0)
             .setRestitution(0)
             .setActiveEvents(ActiveEvents.COLLISION_EVENTS)
-            .setActiveCollisionTypes(ActiveCollisionTypes.ALL).setSensor(true)
+            .setActiveCollisionTypes(ActiveCollisionTypes.ALL)
+            .setSensor(true);
         this.collider = this.world.createCollider(
             collider_desc,
             this.rigid_body
         );
     }
     destroy() {
-        this.world.removeRigidBody(this.rigid_body)
-        this.decoration.destroy()
+        this.world.removeRigidBody(this.rigid_body);
+        this.decoration.destroy();
     }
 }
-
